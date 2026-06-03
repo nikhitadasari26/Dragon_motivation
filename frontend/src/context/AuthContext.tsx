@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 export interface UserProfile {
@@ -17,6 +17,7 @@ export interface UserProfile {
     streak?: number;
     longestStreak?: number;
 }
+
 
 interface AuthContextType {
     user: UserProfile | null;
@@ -81,12 +82,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         router.push("/login");
     };
 
-    const updateUser = (updatedFields: Partial<UserProfile>) => {
-        if (!user) return;
-        const updatedUser = { ...user, ...updatedFields };
-        localStorage.setItem("dragon_auth_user", JSON.stringify(updatedUser));
-        setUser(updatedUser);
-    };
+    const updateUser = useCallback((updatedFields: Partial<UserProfile>) => {
+        setUser((prevUser) => {
+            if (!prevUser) return null;
+            const updatedUser = { ...prevUser, ...updatedFields };
+            localStorage.setItem("dragon_auth_user", JSON.stringify(updatedUser));
+            return updatedUser;
+        });
+    }, []);
+
 
     // A helper fetch wrapper that automatically appends the JWT bearer token
     const apiFetch = async (endpoint: string, options: RequestInit = {}) => {

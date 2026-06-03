@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "./AuthContext";
 import { useAudio } from "./AudioContext";
 
@@ -53,6 +53,19 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const subscriptionsRef = useRef<Set<string>>(new Set());
 
+    const userRef = useRef(user);
+    const updateUserRef = useRef(updateUser);
+    const playChimeRef = useRef(playChime);
+    const playLevelUpRef = useRef(playLevelUp);
+
+    useEffect(() => {
+        userRef.current = user;
+        updateUserRef.current = updateUser;
+        playChimeRef.current = playChime;
+        playLevelUpRef.current = playLevelUp;
+    }, [user, updateUser, playChime, playLevelUp]);
+
+
     // Serialize standard STOMP frame
     const serializeFrame = (command: string, headers: Record<string, string>, body = "") => {
         let frame = command + "\n";
@@ -91,8 +104,9 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return { command, headers, body };
     };
 
-    const connect = () => {
-        if (!user || socketRef.current) return;
+    const connect = useCallback(() => {
+        const currentUser = userRef.current;
+        if (!currentUser || socketRef.current) return;
 
         // Spring Boot WS endpoint (WS endpoint is not protected by standard HTTP filter, SockJS is mapped)
         let wsUrl = process.env.NEXT_PUBLIC_WS_BASE_URL;
@@ -131,7 +145,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 setConnected(true);
                 
                 // Subscribe to user private channel /topic/partner/{userId}
-                const subDest = `/topic/partner/${user.id}`;
+                const subDest = `/topic/partner/${currentUser.id}`;
                 const subFrame = serializeFrame("SUBSCRIBE", {
                     id: "sub-partner",
                     destination: subDest
@@ -147,24 +161,24 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                     // Handle live triggers
                     if (msg.type === "STAR_RECEIVED") {
                         if (msg.totalStars !== undefined) {
-                            updateUser({
+                            updateUserRef.current({
                                 stars: msg.totalStars,
                                 dragonLevel: msg.dragonLevel
                             });
                         }
                         if (msg.leveledUp) {
-                            playLevelUp();
+                            playLevelUpRef.current();
                         } else {
-                            playChime();
+                            playChimeRef.current();
                         }
                     }
                     else if (msg.type === "PARTNER_ENCOURAGEMENT") {
                         // Play a light cute chime
-                        playChime();
+                        playChimeRef.current();
                     }
                     else if (msg.type === "PARTNER_CONNECTED") {
                         // Map partner status in profile
-                        updateUser({
+                        updateUserRef.current({
                             partnerId: msg.partnerId ?? null
                         });
                     }
@@ -193,9 +207,9 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             console.error("WebSocket error: ", err);
             socket.close();
         };
-    };
+    }, []);
 
-    const disconnect = () => {
+    const disconnect = useCallback(() => {
         if (reconnectTimeoutRef.current) {
             clearTimeout(reconnectTimeoutRef.current);
             reconnectTimeoutRef.current = null;
@@ -212,11 +226,11 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
         setConnected(false);
         subscriptionsRef.current.clear();
-    };
+    }, []);
 
     // Connect WebSocket when user is authenticated, and close on logout
     useEffect(() => {
-        if (user) {
+        if (user?.id) {
             connect();
         } else {
             disconnect();
@@ -225,14 +239,16 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return () => {
             disconnect();
         };
-    }, [user, token]);
+    }, [user?.id, token, connect, disconnect]);
 
     const sendEncouragement = (msg: string) => {
-        if (!user || !user.partnerId || !socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
+        const currentUser = userRef.current;
+        if (!currentUser || !currentUser.partnerId || !socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
         
         // Encourage REST API or directly over socket. For reliability and database tracking, 
         // we use our API wrapper in UI, but WebSocket exposes connection status.
     };
+
 
     const awardStarToPartner = (taskId: number | null, note: string) => {
         // Can be managed via API, WebSocket handles reactive triggers
