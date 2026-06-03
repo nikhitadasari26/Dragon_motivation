@@ -16,8 +16,11 @@ public class EmailService {
     @Value("${spring.mail.username:noreply@dragonmotivation.com}")
     private String fromEmail;
 
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
+
     public void sendVerificationEmail(String email, String nickname, String token) {
-        String link = "http://localhost:3000/verify-email?token=" + token;
+        String link = frontendUrl + "/verify-email?token=" + token;
         
         // Print to console regardless for developer visibility
         printVerificationConsole(email, nickname, link);
@@ -49,7 +52,7 @@ public class EmailService {
     }
 
     public void sendPasswordResetEmail(String email, String nickname, String token) {
-        String link = "http://localhost:3000/reset-password?token=" + token;
+        String link = frontendUrl + "/reset-password?token=" + token;
         
         // Print to console regardless for developer visibility
         printPasswordResetConsole(email, nickname, link);

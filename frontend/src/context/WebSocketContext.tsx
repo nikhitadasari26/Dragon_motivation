@@ -1,11 +1,11 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { useAuth } from "./AuthContext";
 import { useAudio } from "./AudioContext";
 
 interface WebSocketMessage {
-    type: "PARTNER_TASK_COMPLETED" | "STAR_RECEIVED" | "PARTNER_ENCOURAGEMENT" | "PARTNER_CONNECTED" | "ACHIEVEMENT_EARNED" | "PARTNER_INVITATION_RECEIVED" | "PARTNER_INVITATION_REJECTED";
+    type: "PARTNER_TASK_COMPLETED" | "STAR_RECEIVED" | "PARTNER_ENCOURAGEMENT" | "PARTNER_CONNECTED" | "ACHIEVEMENT_EARNED";
     partnerId?: number;
     partnerNickname?: string;
     partnerAvatar?: string;
@@ -17,9 +17,6 @@ interface WebSocketMessage {
     message?: string;
     timestamp?: string;
     senderNickname?: string;
-    senderEmail?: string;
-    receiverNickname?: string;
-    receiverEmail?: string;
     achievementId?: number;
     name?: string;
     description?: string;
@@ -52,19 +49,6 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const socketRef = useRef<WebSocket | null>(null);
     const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const subscriptionsRef = useRef<Set<string>>(new Set());
-
-    const userRef = useRef(user);
-    const updateUserRef = useRef(updateUser);
-    const playChimeRef = useRef(playChime);
-    const playLevelUpRef = useRef(playLevelUp);
-
-    useEffect(() => {
-        userRef.current = user;
-        updateUserRef.current = updateUser;
-        playChimeRef.current = playChime;
-        playLevelUpRef.current = playLevelUp;
-    }, [user, updateUser, playChime, playLevelUp]);
-
 
     // Serialize standard STOMP frame
     const serializeFrame = (command: string, headers: Record<string, string>, body = "") => {
@@ -104,24 +88,18 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return { command, headers, body };
     };
 
-    const connect = useCallback(() => {
-        const currentUser = userRef.current;
-        if (!currentUser || socketRef.current) return;
+    const connect = () => {
+        if (!user || socketRef.current) return;
 
-        // Spring Boot WS endpoint
+        // Spring Boot WS endpoint (WS endpoint is not protected by standard HTTP filter, SockJS is mapped)
         let wsUrl = process.env.NEXT_PUBLIC_WS_BASE_URL;
-        if (wsUrl) {
-            // Auto-convert http/https to ws/wss protocols in case the environment variable was misconfigured
-            if (wsUrl.startsWith("http")) {
-                wsUrl = wsUrl.replace(/^http/, "ws");
-            }
-        } else {
+        if (!wsUrl) {
             const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
             if (apiBase) {
-                wsUrl = apiBase.replace(/^http/, "ws") + "/ws";
+                wsUrl = apiBase.replace(/^http/, "ws") + "/ws/websocket";
             } else {
                 const hostname = typeof window !== "undefined" ? window.location.hostname : "localhost";
-                wsUrl = `ws://${hostname}:8080/ws`;
+                wsUrl = `ws://${hostname}:8080/ws/websocket`;
             }
         }
         const socket = new WebSocket(wsUrl);
@@ -147,7 +125,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 setConnected(true);
                 
                 // Subscribe to user private channel /topic/partner/{userId}
-                const subDest = `/topic/partner/${currentUser.id}`;
+                const subDest = `/topic/partner/${user.id}`;
                 const subFrame = serializeFrame("SUBSCRIBE", {
                     id: "sub-partner",
                     destination: subDest
@@ -163,24 +141,24 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                     // Handle live triggers
                     if (msg.type === "STAR_RECEIVED") {
                         if (msg.totalStars !== undefined) {
-                            updateUserRef.current({
+                            updateUser({
                                 stars: msg.totalStars,
                                 dragonLevel: msg.dragonLevel
                             });
                         }
                         if (msg.leveledUp) {
-                            playLevelUpRef.current();
+                            playLevelUp();
                         } else {
-                            playChimeRef.current();
+                            playChime();
                         }
                     }
                     else if (msg.type === "PARTNER_ENCOURAGEMENT") {
                         // Play a light cute chime
-                        playChimeRef.current();
+                        playChime();
                     }
                     else if (msg.type === "PARTNER_CONNECTED") {
                         // Map partner status in profile
-                        updateUserRef.current({
+                        updateUser({
                             partnerId: msg.partnerId ?? null
                         });
                     }
@@ -209,9 +187,9 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             console.error("WebSocket error: ", err);
             socket.close();
         };
-    }, []);
+    };
 
-    const disconnect = useCallback(() => {
+    const disconnect = () => {
         if (reconnectTimeoutRef.current) {
             clearTimeout(reconnectTimeoutRef.current);
             reconnectTimeoutRef.current = null;
@@ -228,11 +206,11 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
         setConnected(false);
         subscriptionsRef.current.clear();
-    }, []);
+    };
 
     // Connect WebSocket when user is authenticated, and close on logout
     useEffect(() => {
-        if (user?.id) {
+        if (user) {
             connect();
         } else {
             disconnect();
@@ -241,16 +219,14 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return () => {
             disconnect();
         };
-    }, [user?.id, token, connect, disconnect]);
+    }, [user, token]);
 
     const sendEncouragement = (msg: string) => {
-        const currentUser = userRef.current;
-        if (!currentUser || !currentUser.partnerId || !socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
+        if (!user || !user.partnerId || !socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
         
         // Encourage REST API or directly over socket. For reliability and database tracking, 
         // we use our API wrapper in UI, but WebSocket exposes connection status.
     };
-
 
     const awardStarToPartner = (taskId: number | null, note: string) => {
         // Can be managed via API, WebSocket handles reactive triggers
@@ -275,9 +251,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             {/* Float notification alerts / toast alert popups */}
             {lastMessage && (
                 <div className="fixed top-4 left-1/2 z-50 flex -translate-x-1/2 animate-bounce items-center gap-3 rounded-2xl border-4 border-amber-300 bg-white p-4 shadow-xl select-none max-w-sm w-full md:max-w-md">
-                    <span className="text-3xl">
-                        {lastMessage.type === "PARTNER_INVITATION_REJECTED" ? "❌" : "✨"}
-                    </span>
+                    <span className="text-3xl">✨</span>
                     <div className="flex-1">
                         <h4 className="font-black text-slate-800 text-sm">
                             {lastMessage.type === "STAR_RECEIVED" && "🎉 Magical Star Received!"}
@@ -285,8 +259,6 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                             {lastMessage.type === "PARTNER_ENCOURAGEMENT" && "🎈 Encouragement Bubble!"}
                             {lastMessage.type === "PARTNER_CONNECTED" && "🤝 Accountability Bond Formed!"}
                             {lastMessage.type === "ACHIEVEMENT_EARNED" && "🏆 Trainer Badge Unlocked!"}
-                            {lastMessage.type === "PARTNER_INVITATION_RECEIVED" && "✉️ Partner Invitation Received!"}
-                            {lastMessage.type === "PARTNER_INVITATION_REJECTED" && "💔 Invitation Declined"}
                         </h4>
                         <p className="text-xs text-slate-600 font-bold mt-0.5">
                             {lastMessage.type === "STAR_RECEIVED" && 
@@ -299,10 +271,6 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                                 `You are now linked with ${lastMessage.partnerNickname}! Let's reach our goals together.`}
                             {lastMessage.type === "ACHIEVEMENT_EARNED" && 
                                 `Congratulations! You unlocked the "${lastMessage.name}" badge: ${lastMessage.description}!`}
-                            {lastMessage.type === "PARTNER_INVITATION_RECEIVED" &&
-                                `${lastMessage.senderNickname || "Someone"} sent you an accountability invitation!`}
-                            {lastMessage.type === "PARTNER_INVITATION_REJECTED" &&
-                                `${lastMessage.receiverNickname || "Someone"} declined your accountability invitation.`}
                         </p>
                     </div>
                     <button

@@ -135,18 +135,6 @@ public class PartnerService {
 
         invitation.setStatus(PartnerInvitation.InvitationStatus.REJECTED);
         invitationRepository.save(invitation);
-
-        // Broadcast to the sender that the invitation was rejected
-        try {
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("type", "PARTNER_INVITATION_REJECTED");
-            payload.put("receiverNickname", receiver.getNickname());
-            payload.put("receiverEmail", receiver.getEmail());
-
-            messagingTemplate.convertAndSend((String) ("/topic/partner/" + invitation.getSender().getId()), (Object) payload);
-        } catch (Exception e) {
-            System.err.println("Failed to send rejection WS alert: " + e.getMessage());
-        }
     }
 
     public List<PartnerInvitation> getPendingInvitations(User user) {

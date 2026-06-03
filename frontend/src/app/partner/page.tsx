@@ -10,7 +10,7 @@ import { User, Send, Award, Heart, CheckCircle, AlertCircle, ArrowLeft, Loader, 
 export default function PartnerPage() {
     const { user, apiFetch } = useAuth();
     const { playChime } = useAudio();
-    const { lastMessage, connected } = useWebSocket();
+    const { lastMessage } = useWebSocket();
 
     const [inviteEmail, setInviteEmail] = useState("");
     const [invitations, setInvitations] = useState<any[]>([]);
@@ -186,15 +186,7 @@ export default function PartnerPage() {
                     <ArrowLeft size={14} className="mr-1 stroke-[4px]" /> Dashboard
                 </Link>
                 <h1 className="text-xl font-black text-slate-800 tracking-tight">ACCOUNTABILITY CENTER</h1>
-                <div className="flex items-center gap-3">
-                    <span className={`inline-flex items-center gap-1 rounded-full border-2 border-slate-800 px-2 py-0.5 text-[10px] font-black shadow-[1px_1px_0px_0px_rgba(30,41,59,1)] ${
-                        connected ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800 animate-pulse"
-                    }`} title={connected ? "WebSocket Connected Live" : "WebSocket Disconnected (Offline)"}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${connected ? "bg-emerald-500" : "bg-rose-500"}`}></span>
-                        {connected ? "LIVE" : "OFFLINE"}
-                    </span>
-                    <span className="text-2xl select-none">🤝</span>
-                </div>
+                <span className="text-2xl select-none">🤝</span>
             </header>
 
             {/* Global Alerts */}
