@@ -1,0 +1,144 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc; /* Pastel sky background */
+  --foreground: #1e293b; /* Dark slate for high readability */
+  --font-sans: var(--font-outfit), system-ui, sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+}
+
+body {
+  background: linear-gradient(180deg, #eff6ff 0%, #faf5ff 100%);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+}
+
+/* --- Premium Neobrutalist Cartoon Design System --- */
+
+/* Thick, high-contrast slate borders with flat offsets */
+.cartoon-card {
+  background: rgba(255, 255, 255, 0.85);
+  border: 4px solid #1e293b;
+  border-radius: 24px;
+  box-shadow: 6px 6px 0px 0px #1e293b;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  backdrop-filter: blur(12px);
+}
+
+.cartoon-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0px 0px #1e293b;
+}
+
+/* Playful, chunky flat action buttons */
+.cartoon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1.5rem;
+  border: 3px solid #1e293b;
+  border-radius: 16px;
+  box-shadow: 4px 4px 0px 0px #1e293b;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cartoon-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0px 0px #1e293b;
+}
+
+.cartoon-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0px 0px #1e293b;
+}
+
+/* Chunky text inputs */
+.cartoon-input {
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  font-weight: 700;
+  background: #ffffff;
+  border: 3px solid #1e293b;
+  border-radius: 16px;
+  box-shadow: 2px 2px 0px 0px #1e293b;
+  outline: none;
+  transition: all 0.15s ease-in-out;
+}
+
+.cartoon-input:focus {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px 0px #1e293b;
+  border-color: #8b5cf6; /* magical purple */
+}
+
+/* Magical scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-left: 3px solid #1e293b;
+}
+::-webkit-scrollbar-thumb {
+  background: #fca5a5; /* pastel rose */
+  border: 3px solid #1e293b;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #f87171;
+}
+
+/* --- Floating whimsical keyframe decorations --- */
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+
+@keyframes cloud-slide {
+  0% { transform: translateX(-10%); }
+  100% { transform: translateX(110%); }
+}
+
+.animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
+.animate-cloud-1 {
+  animation: cloud-slide 55s linear infinite;
+  opacity: 0.25;
+}
+
+.animate-cloud-2 {
+  animation: cloud-slide 75s linear infinite;
+  animation-delay: -25s;
+  opacity: 0.2;
+}
+
+.bg-clouds {
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(253, 244, 255, 0.8) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(239, 246, 255, 0.8) 0%, transparent 45%);
+}
+
+/* Suppress floating Next.js/Turbopack dev overlay and indicators */
+nextjs-portal,
+#nextjs-portal,
+next-dev-overlay,
+.__next-disclose-button,
+[class*="next-dev-overlay"],
+[id*="next-dev-overlay"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
