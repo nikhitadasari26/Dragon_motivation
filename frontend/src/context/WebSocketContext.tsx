@@ -96,13 +96,16 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
         // Spring Boot WS endpoint (WS endpoint is not protected by standard HTTP filter, SockJS is mapped)
         let wsUrl = process.env.NEXT_PUBLIC_WS_BASE_URL;
+        if (wsUrl && wsUrl.endsWith("/ws/websocket")) {
+            wsUrl = wsUrl.replace("/ws/websocket", "/ws");
+        }
         if (!wsUrl) {
             const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
             if (apiBase) {
-                wsUrl = apiBase.replace(/^http/, "ws") + "/ws/websocket";
+                wsUrl = apiBase.replace(/^http/, "ws") + "/ws";
             } else {
                 const hostname = typeof window !== "undefined" ? window.location.hostname : "localhost";
-                wsUrl = `ws://${hostname}:8080/ws/websocket`;
+                wsUrl = `ws://${hostname}:8080/ws`;
             }
         }
         const socket = new WebSocket(wsUrl);
