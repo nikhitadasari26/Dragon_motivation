@@ -5,7 +5,7 @@ import { useAuth } from "./AuthContext";
 import { useAudio } from "./AudioContext";
 
 interface WebSocketMessage {
-    type: "PARTNER_TASK_COMPLETED" | "STAR_RECEIVED" | "PARTNER_ENCOURAGEMENT" | "PARTNER_CONNECTED" | "ACHIEVEMENT_EARNED";
+    type: "PARTNER_TASK_COMPLETED" | "STAR_RECEIVED" | "PARTNER_ENCOURAGEMENT" | "PARTNER_CONNECTED" | "ACHIEVEMENT_EARNED" | "PARTNER_INVITATION_RECEIVED" | "PARTNER_INVITATION_REJECTED";
     partnerId?: number;
     partnerNickname?: string;
     partnerAvatar?: string;
@@ -17,6 +17,9 @@ interface WebSocketMessage {
     message?: string;
     timestamp?: string;
     senderNickname?: string;
+    senderEmail?: string;
+    receiverNickname?: string;
+    receiverEmail?: string;
     achievementId?: number;
     name?: string;
     description?: string;
@@ -251,7 +254,9 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             {/* Float notification alerts / toast alert popups */}
             {lastMessage && (
                 <div className="fixed top-4 left-1/2 z-50 flex -translate-x-1/2 animate-bounce items-center gap-3 rounded-2xl border-4 border-amber-300 bg-white p-4 shadow-xl select-none max-w-sm w-full md:max-w-md">
-                    <span className="text-3xl">✨</span>
+                    <span className="text-3xl">
+                        {lastMessage.type === "PARTNER_INVITATION_REJECTED" ? "❌" : "✨"}
+                    </span>
                     <div className="flex-1">
                         <h4 className="font-black text-slate-800 text-sm">
                             {lastMessage.type === "STAR_RECEIVED" && "🎉 Magical Star Received!"}
@@ -259,6 +264,8 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                             {lastMessage.type === "PARTNER_ENCOURAGEMENT" && "🎈 Encouragement Bubble!"}
                             {lastMessage.type === "PARTNER_CONNECTED" && "🤝 Accountability Bond Formed!"}
                             {lastMessage.type === "ACHIEVEMENT_EARNED" && "🏆 Trainer Badge Unlocked!"}
+                            {lastMessage.type === "PARTNER_INVITATION_RECEIVED" && "✉️ Partner Invitation Received!"}
+                            {lastMessage.type === "PARTNER_INVITATION_REJECTED" && "💔 Invitation Declined"}
                         </h4>
                         <p className="text-xs text-slate-600 font-bold mt-0.5">
                             {lastMessage.type === "STAR_RECEIVED" && 
@@ -271,6 +278,10 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                                 `You are now linked with ${lastMessage.partnerNickname}! Let's reach our goals together.`}
                             {lastMessage.type === "ACHIEVEMENT_EARNED" && 
                                 `Congratulations! You unlocked the "${lastMessage.name}" badge: ${lastMessage.description}!`}
+                            {lastMessage.type === "PARTNER_INVITATION_RECEIVED" &&
+                                `${lastMessage.senderNickname || "Someone"} sent you an accountability invitation!`}
+                            {lastMessage.type === "PARTNER_INVITATION_REJECTED" &&
+                                `${lastMessage.receiverNickname || "Someone"} declined your accountability invitation.`}
                         </p>
                     </div>
                     <button
