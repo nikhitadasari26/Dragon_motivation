@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { 
     Award, BarChart3, Star, TrendingUp, Calendar, Heart, ShieldAlert,
-    ChevronLeft, Trophy, Sparkles, CheckCircle2, Circle 
+    ChevronLeft, Trophy, Sparkles, CheckCircle2, Circle, Mail, Flame, Zap
 } from "lucide-react";
 
 export default function AnalyticsPage() {
@@ -302,6 +302,57 @@ export default function AnalyticsPage() {
                 {/* RIGHT: Weekly stats, Mood History (5 cols) */}
                 <section className="space-y-6 md:col-span-5">
                     
+                    {/* Trainer Profile Card */}
+                    <div className="cartoon-card p-6 bg-white/95 relative overflow-hidden">
+                        {/* Whimsical background badge */}
+                        <div className="absolute right-0 top-0 translate-x-3 -translate-y-3 opacity-10 rotate-12 scale-150 select-none">
+                            <Trophy size={140} className="text-indigo-900" />
+                        </div>
+                        
+                        <h2 className="text-md font-black text-slate-800 uppercase tracking-wider mb-4 border-b-2 border-slate-100 pb-1">
+                            Trainer Passport
+                        </h2>
+                        
+                        <div className="relative z-10 flex items-center gap-4">
+                            <div className="h-16 w-16 rounded-2xl border-3 border-slate-900 bg-indigo-50 flex items-center justify-center text-4xl shadow-[2px_2px_0px_0px_rgba(30,41,59,1)]">
+                                {user?.avatar === "emerald" ? "🟢" : user?.avatar === "sapphire" ? "🔵" : "🔴"}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight truncate">
+                                    {user?.nickname || user?.username}
+                                </h3>
+                                <div className="flex items-center gap-1.5 text-slate-500 mt-1">
+                                    <Mail size={12} className="stroke-[2.5px] shrink-0" />
+                                    <span className="text-xs font-bold truncate lowercase">{user?.email}</span>
+                                </div>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 border-2 border-slate-900 text-slate-700 font-extrabold text-[9px] px-2 py-0.5 uppercase shadow-[1px_1px_0px_0px_rgba(30,41,59,1)]">
+                                        Gender: {user?.gender || "Not Set"}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Trainer stats: XP & Streaks */}
+                        <div className="relative z-10 grid grid-cols-3 gap-3 mt-5 pt-4 border-t-3 border-dashed border-slate-200 text-center">
+                            <div className="bg-slate-50 border-3 border-slate-900 rounded-2xl p-2.5 shadow-[2px_2px_0px_0px_rgba(30,41,59,1)] flex flex-col justify-center items-center">
+                                <Zap size={14} className="text-amber-500 fill-amber-500 stroke-[2.5px] mb-1" />
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Total XP</span>
+                                <span className="text-xs font-black text-indigo-700 mt-0.5">{user?.totalXp ?? 0}</span>
+                            </div>
+                            <div className="bg-slate-50 border-3 border-slate-900 rounded-2xl p-2.5 shadow-[2px_2px_0px_0px_rgba(30,41,59,1)] flex flex-col justify-center items-center">
+                                <Flame size={14} className="text-orange-500 fill-orange-500 stroke-[2.5px] mb-1" />
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Current</span>
+                                <span className="text-xs font-black text-emerald-600 mt-0.5">{user?.streak ?? 0} days</span>
+                            </div>
+                            <div className="bg-slate-50 border-3 border-slate-900 rounded-2xl p-2.5 shadow-[2px_2px_0px_0px_rgba(30,41,59,1)] flex flex-col justify-center items-center">
+                                <Trophy size={14} className="text-rose-500 fill-rose-500 stroke-[2.5px] mb-1" />
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Record</span>
+                                <span className="text-xs font-black text-rose-600 mt-0.5">{user?.longestStreak ?? 0} days</span>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Weekly progress grid */}
                     <div className="cartoon-card p-6 bg-white/95">
                         <h2 className="text-md font-black text-slate-800 uppercase tracking-wider mb-4 border-b-2 border-slate-100 pb-1">
