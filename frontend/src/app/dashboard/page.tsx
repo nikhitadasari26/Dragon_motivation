@@ -25,7 +25,7 @@ interface Task {
 export default function DashboardPage() {
     const { user, apiFetch, logout, updateUser } = useAuth();
     const { playChime, playLevelUp, setMusicMood } = useAudio();
-    const { lastMessage, clearLastMessage } = useWebSocket();
+    const { lastMessage, clearLastMessage, connected } = useWebSocket();
     const router = useRouter();
 
     // App states
@@ -310,6 +310,13 @@ export default function DashboardPage() {
 
                     <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border-2 border-slate-800 bg-amber-100 px-3 py-1 text-xs font-black text-amber-800 shadow-[2px_2px_0px_0px_rgba(30,41,59,1)]">
                         ⭐ {user?.stars || 0} Stars
+                    </span>
+
+                    <span className={`inline-flex items-center gap-1 rounded-full border-2 border-slate-800 px-2 py-0.5 text-[10px] font-black shadow-[1px_1px_0px_0px_rgba(30,41,59,1)] ${
+                        connected ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800 animate-pulse"
+                    }`} title={connected ? "WebSocket Connected Live" : "WebSocket Disconnected (Offline)"}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${connected ? "bg-emerald-500" : "bg-rose-500"}`}></span>
+                        {connected ? "LIVE" : "OFFLINE"}
                     </span>
                     
                     <Link href="/partner" className="cartoon-btn text-xs py-1.5 px-3 bg-emerald-400 hover:bg-emerald-500 text-white shadow-[2px_2px_0px_0px_rgba(30,41,59,1)]">

@@ -108,12 +108,14 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         const currentUser = userRef.current;
         if (!currentUser || socketRef.current) return;
 
-        // Spring Boot WS endpoint (WS endpoint is not protected by standard HTTP filter, SockJS is mapped)
+        // Spring Boot WS endpoint
         let wsUrl = process.env.NEXT_PUBLIC_WS_BASE_URL;
-        if (wsUrl && wsUrl.endsWith("/ws/websocket")) {
-            wsUrl = wsUrl.replace("/ws/websocket", "/ws");
-        }
-        if (!wsUrl) {
+        if (wsUrl) {
+            // Auto-convert http/https to ws/wss protocols in case the environment variable was misconfigured
+            if (wsUrl.startsWith("http")) {
+                wsUrl = wsUrl.replace(/^http/, "ws");
+            }
+        } else {
             const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
             if (apiBase) {
                 wsUrl = apiBase.replace(/^http/, "ws") + "/ws";
